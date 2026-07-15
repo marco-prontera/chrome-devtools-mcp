@@ -14,6 +14,10 @@ import type {
   HeapQueryOptions,
 } from '../processors/HeapSnapshotManager.js';
 import type {McpPage} from '../McpPage.js';
+import type {
+  NetworkOverride,
+  NetworkOverrideInput,
+} from '../NetworkOverrideManager.js';
 import {zod} from '../third_party/index.js';
 import type {
   Dialog,
@@ -216,6 +220,8 @@ export type Context = Readonly<{
   uninstallPWA(options: UninstallPWAOptions): Promise<void>;
   launchPWA(options: LaunchPWAOptions): Promise<Page>;
   getPWAState(options: GetPWAStateOptions): Promise<PWAState>;
+  validateNetworkUrl(url: string): void;
+  validatePath(filePath: string): Promise<string>;
   ensureExtension<Extension extends `.${string}`>(
     filePath: string,
     extension: Extension,
@@ -374,6 +380,9 @@ export type ContextPage = Readonly<{
   waitForTextOnPage(text: string[], timeout?: number): Promise<Element>;
   getDevToolsPage(): Promise<Page | undefined>;
   openDevTools(): Promise<Page | undefined>;
+  addNetworkOverride(input: NetworkOverrideInput): Promise<NetworkOverride>;
+  listNetworkOverrides(): NetworkOverride[];
+  removeNetworkOverride(id: number): Promise<boolean>;
 }>;
 
 export function defineTool<Schema extends zod.ZodRawShape>(

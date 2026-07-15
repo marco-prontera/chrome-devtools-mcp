@@ -61,6 +61,11 @@ import {
   type TargetUniverse,
 } from './devtools/DevtoolsUtils.js';
 import {
+  NetworkOverrideManager,
+  type NetworkOverride,
+  type NetworkOverrideInput,
+} from './NetworkOverrideManager.js';
+import {
   ConsoleCollector,
   NetworkCollector,
   type ListenerMap,
@@ -142,6 +147,7 @@ export class McpPage implements ContextPage {
   #sourceMaps: boolean;
   #commentBridge?: DevToolsCommentBridge;
   #onNotification?: (message: string) => void;
+  #networkOverrideManager: NetworkOverrideManager;
 
   constructor(
     page: Page,
@@ -161,6 +167,7 @@ export class McpPage implements ContextPage {
     this.#sourceMaps = options.sourceMaps ?? true;
     this.#onNotification = options.onNotification;
     this.pptrPage = page;
+    this.#networkOverrideManager = new NetworkOverrideManager(page);
     this.id = id;
     this.isolatedContextName = options.isolatedContextName;
     this.#dialogHandler = (dialog: Dialog): void => {
@@ -472,6 +479,7 @@ export class McpPage implements ContextPage {
     this.#commentBridge?.dispose();
     this.#commentBridge = undefined;
     this.pptrPage.off('dialog', this.#dialogHandler);
+    void this.#networkOverrideManager.dispose();
     this.networkCollector.dispose();
     this.consoleCollector.dispose();
     const devtoolsUniverse = this.#devtoolsUniverse;
@@ -480,6 +488,18 @@ export class McpPage implements ContextPage {
     void devtoolsUniverse?.session.detach().catch(e => {
       logger?.('Failed to detach DevTools session', e);
     });
+  }
+
+  addNetworkOverride(input: NetworkOverrideInput): Promise<NetworkOverride> {
+    return this.#networkOverrideManager.add(input);
+  }
+
+  listNetworkOverrides(): NetworkOverride[] {
+    return this.#networkOverrideManager.list();
+  }
+
+  removeNetworkOverride(id: number): Promise<boolean> {
+    return this.#networkOverrideManager.remove(id);
   }
 
   async executeThirdPartyDeveloperTool(
